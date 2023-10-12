@@ -1,4 +1,10 @@
-import {useRef} from "react";
+/*
+TODO: Try to loop components with received custom hook data,
+ after that, provide data via props.
+ Result = failed
+   */
+
+import {useRef, useEffect} from "react";
 import useInput from "../hooks/use-input";
 import InputField from "./InputField";
 
@@ -6,80 +12,78 @@ const SimpleInput = (props) => {
     const inputs = [
         {id: 'name', type: 'text'},
         {id: 'email', type: 'email'}
-    ]
+    ];
+
+    let inputsOptions = []
 
     const checkValue = value => value.trim() !== '';
 
-    // use custom hook without object destructuring
-    const testInput = useInput(checkValue);
-    const enteredName = testInput.value;
-    const enteredNameIsValid = testInput.isValid;
-    const nameInputHasError = testInput.hasError;
-    const nameBlurHandler = testInput.inputBlurHandler;
-    const nameChangeHandler = testInput.valueChangeHandler;
-    const resetNameInput = testInput.reset;
+    const InputRef = useRef();
 
-    console.log(testInput)
+    const inputCustomHook = useInput(checkValue);
 
-    // const {
-    //     value: enteredName,
-    //     isValid: enteredNameIsValid,
-    //     hasError: nameInputHasError,
-    //     inputBlurHandler: nameBlurHandler,
-    //     valueChangeHandler: nameChangeHandler,
-    //     reset: resetNameInput,
-    // } = useInput(checkValue);
+    const inputFields = inputs.map(input => {
+        console.log(input.id)
+        const modifiedData = inputCustomHook
+        modifiedData[`entered${input.id}`] =  inputCustomHook.value;
+        modifiedData[`entered${input.id}IsValid`] =  inputCustomHook.isValid;
+        modifiedData[`${input.id}InputHasError`] =  inputCustomHook.hasError;
+        modifiedData[`${input.id}BlurHandler`] =  inputCustomHook.inputBlurHandler;
+        modifiedData[`${input.id}ChangeHandler`] =  inputCustomHook.valueChangeHandler;
+        modifiedData[`reset${input.id}Input`] =  inputCustomHook.reset;
 
-    // / use custom hook with object destructuring
-    const {
-        value: enteredEmail,
-        isValid: enteredEmailIsValid,
-        hasError: emailInputHasError,
-        inputBlurHandler: emailBlurHandler,
-        valueChangeHandler: emailChangeHandler,
-        reset: resetEmailInput,
-    } = useInput(checkValue);
+        console.log(modifiedData);
 
+        inputsOptions.push({
+            enteredFieldIsValid: modifiedData[`entered${input.id}IsValid`],
+            inputHasError: modifiedData[`${input.id}InputHasError`],
+            reset: modifiedData[`reset${input.id}Input`]
 
-    const nameInputRef = useRef();
-    const emailInputRef = useRef();
+        });
+
+        console.log(inputsOptions)
+
+        modifiedData[`${input.id}InputRef`] = InputRef
+
+        return (
+            <InputField labelTitle={`Your ${input.id}`}
+                        key={input.id}
+                        ref={modifiedData[`${input.id}InputRef`]}
+                        inputId={input.id}
+                        value={modifiedData[`entered${input.id}`]}
+                        onBlur={modifiedData[`${input.id}BlurHandler`]}
+                        onChange={modifiedData[`${input.id}ChangeHandler`]}
+                        hasError={modifiedData[`${input.id}InputHasError`]}
+                        type={input.type} />
+        )
+    })
 
     let formIsValid = false;
 
-    if (enteredNameIsValid && enteredEmailIsValid) { formIsValid = true; }
+    const isInputFieldsValid = inputsOptions.every(input => input.enteredFieldIsValid);
+    const isSomeInputFieldsValid = inputsOptions.some(input => input.enteredFieldIsValid);
+    const isSomeInputHasError = inputsOptions.some(input => input.inputHasError)
+
+    if (isInputFieldsValid) { formIsValid = true; }
 
 
-    const inputClasses = nameInputHasError || emailInputHasError ? 'form-control invalid' : 'form-control';
+    const inputClasses = isSomeInputHasError ? 'form-control invalid' : 'form-control';
 
     const formSubmissionHandler = (event) => {
         event.preventDefault();
-        if (!enteredNameIsValid || !enteredEmailIsValid) {
+        if (!isSomeInputFieldsValid) {
             return
         }
 
-        resetNameInput();
-        resetEmailInput();
+        inputsOptions.forEach(elem => {
+            elem.reset()
+        })
     }
 
     return (
         <form onSubmit={formSubmissionHandler}>
             <div className={inputClasses}>
-                <InputField labelTitle='Your Name'
-                            ref={nameInputRef}
-                            inputId='name'
-                            value={enteredName}
-                            onBlur={nameBlurHandler}
-                            onChange={nameChangeHandler}
-                            hasError={nameInputHasError}
-                            type='text' />
-                <InputField labelTitle='Your Email'
-                            ref={emailInputRef}
-                            inputId='email'
-                            value={enteredEmail}
-                            onBlur={emailBlurHandler}
-                            onChange={emailChangeHandler}
-                            hasError={emailInputHasError}
-                            type='email'/>
+                {inputFields}
             </div>
             <div className="form-actions">
                 <button disabled={!formIsValid}>Submit</button>
