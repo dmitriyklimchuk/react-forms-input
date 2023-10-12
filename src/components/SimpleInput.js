@@ -3,16 +3,34 @@ import useInput from "../hooks/use-input";
 import InputField from "./InputField";
 
 const SimpleInput = (props) => {
-    const checkValue = value => value.trim() !== '';
-    const {
-        value: enteredName,
-        isValid: enteredNameIsValid,
-        hasError: nameInputHasError,
-        inputBlurHandler: nameBlurHandler,
-        valueChangeHandler: nameChangeHandler,
-        reset: resetNameInput,
-    } = useInput(checkValue);
+    const inputs = [
+        {id: 'name', type: 'text'},
+        {id: 'email', type: 'email'}
+    ]
 
+    const checkValue = value => value.trim() !== '';
+
+    // use custom hook without object destructuring
+    const testInput = useInput(checkValue);
+    const enteredName = testInput.value;
+    const enteredNameIsValid = testInput.isValid;
+    const nameInputHasError = testInput.hasError;
+    const nameBlurHandler = testInput.inputBlurHandler;
+    const nameChangeHandler = testInput.valueChangeHandler;
+    const resetNameInput = testInput.reset;
+
+    console.log(testInput)
+
+    // const {
+    //     value: enteredName,
+    //     isValid: enteredNameIsValid,
+    //     hasError: nameInputHasError,
+    //     inputBlurHandler: nameBlurHandler,
+    //     valueChangeHandler: nameChangeHandler,
+    //     reset: resetNameInput,
+    // } = useInput(checkValue);
+
+    // / use custom hook with object destructuring
     const {
         value: enteredEmail,
         isValid: enteredEmailIsValid,
